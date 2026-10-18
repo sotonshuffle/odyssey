@@ -10,6 +10,8 @@ segments and compares Shortest / Lower risk / Balanced routes. Preferences
 for mapped lighting, stairs, steep gradients, shelter and terrain affect route
 selection separately from the historical-crime model.
 
+**Live demo:** <https://sotonshuffle.github.io/odyssey/> (auto-published from `odyssey-app/` via the `gh-pages` branch)
+
 ## Repo map
 
 | Path | What it is |
