@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
-"""Odyssey route preferences — reference implementation.
+"""Odyssey route preferences, reference implementation.
 
-This module mirrors the routing-side preference logic in
-../odyssey-app/app.js (edgeMultiplier / explanationFactors) 1:1, so the
-Python and JavaScript paths can be tested against identical fixtures
-(see test at the bottom and test_core.js in the app).
-
-Design: preferences NEVER touch the Athena crime model (model.json
-"design_choice"). The model predicts reported street crime; these
-multipliers only reweight edge costs inside the router so the user can
-trade comfort (lighting, stairs, terrain, shelter) against risk and
-distance. Segments whose attribute is unknown in OSM are never
-penalised — the coverage percentages shown in the app's preferences
-dialog are computed by build_odyssey_data.py and written to
-data_manifest.json.
-"""
+Mirrors the routing-side preference logic in ../odyssey-app/app.js
+(edgeMultiplier / explanationFactors) 1:1, so the Python and JavaScript
+paths can be tested against identical fixtures (see the self-test and
+test_core.js). Preferences never touch the crime model: they only
+reweight edge costs inside the router. Unknown attributes are never
+penalised."""
 from dataclasses import dataclass, asdict
 
 
@@ -98,7 +90,7 @@ def explanation_factors(route_segments: list, prefs: UserPrefs) -> list:
 
 
 # ---------------------------------------------------------------- self-test
-# Fixture vectors shared with test_core.js — keep both in sync.
+# Fixture vectors shared with test_core.js, keep both in sync.
 FIXTURES = [
     ({"lighting": "no", "highway_type": "path", "steep": None, "covered": None, "surface": None},
      {"well_lit": True}, 3.0),

@@ -1,39 +1,11 @@
 #!/usr/bin/env python3
-"""
-Odyssey live data pipeline — real Southampton data, nothing synthetic.
-Feeds the Athena routing engine in ../odyssey-app.
-
-What it fetches (all public, all free):
-  1. OpenStreetMap  walking network + lit tags  (Overpass API, ODbL)
-  2. Police UK      street-level crime, last 6 months  (data.police.uk, OGL v3)
-  3. OSM nightlife  pubs/bars/nightclubs (model feature, ODbL)
-  4. EA flood API   live tide gauge + flood warnings  (OGL v3, no key)
-  5. UK Tidal API   tide predictions, OPTIONAL: set TIDAL_API_KEY env var
-     (free registration, https://api.gov.uk/ukho/uk-tidal-api-discovery/)
-
-It then trains the Athena risk model (logistic regression) on the real crime
-data with a temporal train/test split and writes everything the app loads.
-
-Usage:
-    python3 build_odyssey_data.py            # full live run
-    python3 build_odyssey_data.py --offline  # use all cached fetches
-    python3 build_odyssey_data.py --bbox 50.90 50.94 -1.42 -1.36
-
-Outputs (into ./entities/):
-    path_segments.json   walking network with real crime history + model score
-    incidents.json       REAL police street crimes, snapped to segments
-    safe_havens.json     staffed places (OSM 24/7 where mapped, curated rest)
-    model.json           trained model + model card (baseline comparison)
-    live_check.json      EA live tide gauge + flood warnings snapshot
-    data_manifest.json   every source with URL, licence, date, coverage
-
-No Python dependencies beyond the standard library (numpy used if present).
-"""
+"""Builds the Odyssey app data from live public sources into ./entities/.
+Usage: python3 build_odyssey_data.py [--offline] [--bbox ...]"""
 import argparse, gzip, json, math, os, sys, time, urllib.request
 from datetime import date, datetime, timezone
 from collections import Counter, defaultdict
 
-# ---------------------------------------------------------------- constants
+# constants
 SOUTHAMPTON_AREA_ID = 3600127864
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 POLICE_URL = "https://data.police.uk/api/crimes-street/all-crime"
@@ -41,7 +13,7 @@ EA_BASE = "https://environment.data.gov.uk/flood-monitoring"
 TIDAL_API_BASE = "https://admiraltyapi.azurewebsites.net"
 TIDE_STATION_ID = "0062"                       # UKHO Southampton
 EA_TIDE_GAUGE = "E12660"                       # EA Woolston tide gauge
-USER_AGENT = "Odyssey-data/2.0 (SotonShip exemplar project)"
+USER_AGENT = "Odyssey-data/2.0 (SotonShip participant project)"
 
 HIGHWAY_TYPES = ("footway|path|pedestrian|steps|living_street|residential"
                  "|unclassified|tertiary|secondary|primary|cycleway|service")
@@ -133,7 +105,7 @@ SAFE_HAVENS = [{'id': 'SH-01',
 TODAY = date.today()
 NOW_ISO = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-# ---------------------------------------------------------------- helpers
+# helpers
 def dist_m(a, b):
     lat1, lon1, lat2, lon2 = map(math.radians, (a[0], a[1], b[0], b[1]))
     h = (math.sin((lat2-lat1)/2)**2
@@ -203,8 +175,7 @@ def fetch_nightlife():
     return {"elements": []}          # feature degrades to 0, model still works
 
 def fetch_basemap():
-    """Map context for the app's GeoJSON basemap: water, green space, rail.
-    Replaces third-party raster tiles — the app ships its own basemap."""
+    """Map context for the app's GeoJSON basemap: water, green space, rail."""
     q = ('[out:json][timeout:300];area(3600127864)->.a;(\n'
          'way(area.a)["natural"="water"];'
          'way(area.a)["waterway"="riverbank"];'
@@ -397,7 +368,7 @@ def build_segments(ways, args, nightlife):
         })
     return segs
 
-# ---------------------------------------------------------------- police
+# police
 def fetch_police():
     months = months_back(POLICE_MONTHS)
     # probe: drop months the API doesn't have yet (it returns [])
@@ -531,10 +502,7 @@ def fetch_ukho_tides():
         print(f"    !! UK Tidal API error (ignored): {e}")
         return None
 
-# ---------------------------------------------------------------- Athena model
-# Crime prediction only. Preference-related attributes (lighting, isolation,
-# tide exposure, haven proximity, terrain) are deliberately NOT features:
-# they belong in the router as user-preference multipliers, not in the model.
+# risk model: crime prediction only, preferences stay in the router
 REMOVED_FEATURES = ["lit_no", "lit_partial", "lit_unknown", "isolation",
                     "tide_exposed", "haven_300m"]
 FEATURES_STATIC = ["log_len", "is_footway", "is_path", "is_steps", "is_service",
@@ -674,9 +642,8 @@ def train_model(segs, per_month, havens, months, offline):
     # final model: crime-prediction features only
     w, b, path_used = fit([r for r, _ in rows], [yy for _, yy in rows])
 
-    # comparison fit including the removed features, used ONLY as evidence
-    # for the removed_features block — every number comes from this fit
-    rows_w = []           # rows with segment attached (built above, refit here)
+    # comparison fit including the removed features, every number comes from this fit
+    rows_w = []           # rows with segment attached, refit here
     for s in scored:
         for m in train_ms:
             mi = months_sorted.index(m)
@@ -746,7 +713,7 @@ def train_model(segs, per_month, havens, months, offline):
     lighting_unknown_pct = 100.0 * unknown_l / total_segs if total_segs else 0
 
     model = {
-        "name": "Athena street-crime risk model",
+        "name": "Odyssey street-crime risk model",
         "type": "logistic regression (L2, standardised features)",
         "implementation": path_used,
         "features": fidx,
@@ -857,7 +824,7 @@ def train_model(segs, per_month, havens, months, offline):
     print(f"    AUC model {auc_m:.3f} vs baseline {auc_b:.3f} on {test_m}")
     return model, preds
 
-# ---------------------------------------------------------------- main
+# main
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true")
@@ -906,7 +873,7 @@ def main():
     print("5/8 tallying crime per segment ...")
     per_month = tally_crimes(segs, crimes)
 
-    print("6/8 training the Athena risk model ...")
+    print("6/8 training the risk model ...")
     havens = [dict(h) for h in SAFE_HAVENS]
     model, preds = train_model(segs, per_month, havens, months, args.offline)
 
@@ -934,8 +901,7 @@ def main():
         h["segment_id"] = near["id"]
         h.setdefault("source", "curated venue; confirm opening hours before visiting")
 
-    # preference-field coverage, computed from the real data (the app shows
-    # these numbers as footnotes in the preferences modal)
+    # preference-field coverage, computed from the real data
     rendered = [s for s in segs
                 if s["highway_type"] != "service" and s["length_m"] >= 10]
     n = len(rendered) or len(segs) or 1
@@ -973,7 +939,7 @@ def main():
     with open("entities/safe_havens.json", "w") as f:
         json.dump(havens, f, indent=2)
     with open("entities/model.json", "w") as f:
-        json.dump(model or {"status": "untrained — insufficient months"}, f, indent=2)
+        json.dump(model or {"status": "untrained: insufficient months"}, f, indent=2)
     with open("entities/live_check.json", "w") as f:
         json.dump(live, f, indent=2)
     with open("entities/basemap.geojson", "w") as f:

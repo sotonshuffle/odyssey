@@ -6,3 +6,4 @@ odyssey-city-data/overpass_raw.json.gz
 node_modules/
 .DS_Store
 *.log
+__pycache__/

@@ -1,13 +1,13 @@
-# Odyssey — Southampton walking-route comparison
+# Odyssey: Southampton walking-route comparison
 
 **Run it:** `python3 -m http.server 8000` in this folder, then open
 http://localhost:8000. No backend, no accounts, no keys.
 
-- **Map:** mapped walking segments are coloured by Athena's model band
-  (green lower / amber medium / red higher / grey-dashed = no lighting data).
+- **Map:** mapped walking segments are coloured by model band
+  (green lower, amber medium, red higher, grey-dashed = no lighting data).
   Click a segment for its historical data, mapped street attributes and sources.
-- **Routing:** Shortest / Lower risk / Balanced. The lower-risk route
-  weighs Athena's scores more heavily, with a 12-minute detour bound. If two
+- **Routing:** Shortest / Lower risk / Balanced. The lower-risk route weighs
+  the model's scores more heavily, with a 12-minute detour bound. If two
   profiles lead to the same path, both are shown and labelled honestly.
 - **Live:** the panel fetches the real-time Environment Agency tide gauge at
   Woolston and active flood warnings directly in your browser.
@@ -20,9 +20,10 @@ http://localhost:8000. No backend, no accounts, no keys.
   one-month baseline and 0.962 two-month rule). Model bands do not guarantee
   personal safety. The app does not submit route feedback to a server.
 
-Regenerate all data + retrain the model: see `../odyssey-city-data`.
-The app includes Odyssey branding, an Athena loading screen, browser icons and
-three saved colour themes (Harbour Night, Lagoon, Orchid) in Settings.
-Full write-up and demo script: `../GUIDE.md` and `../odyssey-city-data/README.md`.
+Regenerate all data and retrain the model: see `../odyssey-city-data`.
+The app includes Odyssey branding, browser icons and three saved colour
+themes (Blue, Sage, Midnight) in Settings. Full write-up and demo script:
+`../GUIDE.md` and `../odyssey-city-data/README.md`.
 
-Licences: OSM ODbL (basemap, network) · Police UK & EA OGL v3 · Leaflet BSD · code MIT.
+Licences: OSM ODbL (basemap, network), Police UK and EA OGL v3, Leaflet BSD,
+code MIT.
