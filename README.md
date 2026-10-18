@@ -35,7 +35,7 @@ cp entities/*.json ../odyssey-app/data/
 
 Run the routing tests on the real data: `node odyssey-app/test_core.js`.
 
-## What's real (everything)
+## DATA
 
 | Source | Use | Licence |
 |---|---|---|
@@ -54,18 +54,15 @@ popup cites Police UK with the month of the data.
 Night-time walking safety is a widespread concern. In the ONS Opinions and
 Lifestyle Survey (February to March 2022), 82% of women in Britain said they
 feel very or fairly unsafe walking alone after dark in a park or other open
-space, compared with 42% of men. About one in two women felt unsafe walking
-alone after dark in a busy public place, compared with one in five men, and
-37% of women had stopped walking in quiet places after dark because of
-feeling unsafe. Odyssey exists to give people better information for these
+space, compared with 42% of men. From Southampton City Council (2025), 70% of women reported feeling unsafe walking at night.
+Odyssey exists to give people better information for these
 journeys while being honest about what the data can and cannot show.
 
 ## The model
 
-The risk model is a logistic regression (13 standardised features) trained
-by the pipeline on the real crime data, with a temporal split: trained on
-months to July 2026, evaluated on the held-out month August 2026. AUC 0.971
-on the held-out month, against 0.866 for a one-month crime baseline and
+The risk model (ML) is a L2 logistic regression (13 standardised features) trained
+by the pipeline on the real crime data from August 2025 to July 2026 with evaluation on August data.
+AUC 0.971 on the held-out month, against 0.866 for a one-month crime baseline and
 0.962 for a stronger two-month crime-and-length rule. The router uses the
 model score per segment with a 12-minute detour bound. This is a model
 comparison, not a validated estimate of an individual's safety. Full model
@@ -73,20 +70,7 @@ card, coefficients and honesty notes: `odyssey-city-data/entities/model.json`.
 
 ## Honesty by design
 
-- About 45% of mapped walking segments have no lighting data: rendered
+- <45% of mapped walking segments have no lighting data: rendered
   grey-dashed and labelled as a data gap, never given a reassuring band.
-- Police UK blurs crime locations to a street point; snapping distances are
-  recorded and the blurring is stated in the UI.
 - The crime data has no time of day. Lighting and terrain preferences affect
   the route choice, but the model does not prove a route is safer at night.
-- Google Maps receives the start, destination and up to eight intermediate
-  points for non-shortest routes. Google can still recalculate the walk.
-- Offline or out of coverage, the app says what is stale or unavailable
-  instead of faking liveness.
-
-## Demo script
-
-Show a real Southampton journey, compare all three route profiles and point
-out any missing lighting data. The live Environment Agency reading is
-context only; it does not currently change the chosen route. The full demo
-walkthrough is in `odyssey-city-data/README.md`.
