@@ -106,11 +106,7 @@
   const walkable = segments.filter((s) => s.highway_type !== "service" && s.length_m >= 10);
   const counts = { low: 0, medium: 0, high: 0, unknown: 0 };
   walkable.forEach((s) => counts[s.risk_band]++);
-  const unknownPct = Math.round((counts.unknown / walkable.length) * 100);
-  const lenOf = (arr) => arr.reduce((t, x) => t + (x.length_m || 0), 0);
-  const walkLen = lenOf(walkable);
-  const noLightPct = Math.round((lenOf(walkable.filter((x) => x.lighting === "unknown")) / walkLen) * 100);
-  const noCrimePct = Math.round((lenOf(walkable.filter((x) => !x.crime_covered)) / walkLen) * 100);
+  const noLightPct = Math.round((walkable.filter((x) => x.lighting === "unknown").length / walkable.length) * 100);
   const police = manifest && manifest.sources.find((s) => /police/i.test(s.name));
   const crimeCount = police && police.crimes ? police.crimes : null;
   const monthName = (m) => m ? new Date(m + "-01T12:00:00Z").toLocaleDateString("en-GB", { month: "short", year: "numeric" }) : "";
@@ -354,9 +350,8 @@
       b.addEventListener("click", () => chooseDestination(recent[+b.dataset.i])));
     const total = walkable.length;
     $("honesty-card").innerHTML =
-      `<div class="big">${unknownPct}%</div>` +
-      `<p>of Southampton’s ${total.toLocaleString()} walking paths are shown as “risk unknown” instead of guessed. ` +
-      `${noLightPct}% of the network has no lighting record, and ${noCrimePct}% is outside the area police crime data was fetched for.</p>` +
+      `<div class="big">${noLightPct}%</div>` +
+      `<p>of Southampton’s ${total.toLocaleString()} walking paths have no lighting record. Paths we can’t assess are shown as “risk unknown” instead of guessed.</p>` +
       `<div class="meter" aria-hidden="true">${["low", "medium", "high", "unknown"].map((b) =>
         `<span style="width:${(counts[b] / total) * 100}%;background:${b === "unknown"
           ? "repeating-linear-gradient(90deg,#8592A6 0 5px,#1F2E4A 5px 9px)" : COLORS[b]}"></span>`).join("")}</div>` +
@@ -746,20 +741,14 @@
       });
   }
 
-  /* ---------- ride suggestion (settings: odyssey_ride) */
-  const RIDE_DEFAULT = { mode: "long", minutes: 20 };
-  const rideSettings = () => ({ ...RIDE_DEFAULT, ...store.get("odyssey_ride", {}) });
+  /* ---------- ride suggestion: shown for walks over 20 minutes */
+  const RIDE_MINUTES = 20;   // rides are suggested for walks over 20 minutes
   function rideReason() {
-    const set = rideSettings();
-    if (set.mode === "off" || !lastResults) return null;
+    if (!lastResults) return null;
     const best = lastResults.uniq[0];           // the lower-risk route
     const min = Math.round(best.stats.minutes);
-    const long = min > set.minutes;
-    const risky = best.stats.band === "high";
-    if ((set.mode === "long" || set.mode === "long_or_risky") && long)
-      return { title: "Long walk", text: `${min} min on foot${risky ? ", with a higher-risk stretch even on the lower-risk route" : ""}. Prefer a ride?` };
-    if ((set.mode === "risky" || set.mode === "long_or_risky") && risky)
-      return { title: "Higher-risk stretch on every route", text: "Even the lower-risk route passes a higher-risk path. Prefer a ride?" };
+    if (min > RIDE_MINUTES)
+      return { title: "Long walk", text: `${min} min on foot. Prefer a ride?` };
     return null;
   }
   function renderRide() {
@@ -777,8 +766,7 @@
       `<div class="ride-actions">` +
       `<a class="btn ride-uber" href="${uber}" target="_blank" rel="noopener">Uber</a>` +
       `<button class="btn ride-bolt" id="ride-bolt">Bolt</button>` +
-      `<button class="btn secondary" id="ride-share"><svg><use href="#i-share"/></svg>Send location</button></div>` +
-      `<button class="ride-settings" id="ride-settings">Ride suggestions: ${rideSettings().mode === "off" ? "off" : "change"}</button></div>`;
+      `<button class="btn secondary" id="ride-share"><svg><use href="#i-share"/></svg>Send location</button></div>`;
     $("ride-bolt").addEventListener("click", async () => {
       // Bolt has no public link that fills in the destination, so copy it first
       try { await navigator.clipboard.writeText(`${name}${lastResults.toSub ? ", " + lastResults.toSub : ""}, Southampton`); } catch (e) { /* ignore */ }
@@ -786,7 +774,6 @@
       setTimeout(() => window.open("https://bolt.eu/en-gb/rides/", "_blank", "noopener"), 700);
     });
     $("ride-share").addEventListener("click", () => shareMyLocation());
-    $("ride-settings").addEventListener("click", openPrefs);
   }
 
   /* ---------- share where I am right now */
@@ -1230,7 +1217,7 @@
           (ev.auc_baseline_two_month_rule ? `A simple rule (crimes in the last two months, then path length) scores ${ev.auc_baseline_two_month_rule}, so recent crime does most of the work. ` +
           `The model matters most on the ${Math.round(ev.share_scored_with_no_recent_crime * 100)}% of paths with no crime in the last two months, where history alone can’t rank them: it scores ${ev.auc_model_no_recent_crime} there.` : ""),
           `Logistic regression on ${crimeCount ? crimeCount.toLocaleString() + " " : ""}Police UK records${crimePeriod ? ", " + crimePeriod : ""}`] : null,
-        ["What we don’t know", `${noLightPct}% of the walking network has no lighting record, and ${noCrimePct}% is outside the 12 areas police crime data was fetched for. Those paths are shown as risk unknown and never scored.`, "OpenStreetMap, Police UK"],
+        ["What we don’t know", `${noLightPct}% of the walking paths have no lighting record. Those paths are shown as risk unknown and never scored.`, "OpenStreetMap, Police UK"],
         ["Time of night", "Police data has no time of day, so night-time effects come from lighting and isolation, not from crime timing.", "Model card"],
       ]) +
       (model && model.known_limitations ? `<details style="margin-top:6px"><summary class="small" style="cursor:pointer;padding:8px 0">All known limitations</summary>` +
@@ -1292,21 +1279,7 @@
       row("pref-sheltered", "Prefer sheltered paths", `${covTxt(cov.sheltered_known_pct)}. Unmapped cover isn’t penalised.`, p.sheltered) +
       `<div style="padding:14px 0 4px"><p class="row-title">Path surface</p><p class="row-sub">${covTxt(cov.surface_known_pct)}</p>` +
       `<div class="segmented" role="radiogroup" aria-label="Path surface">${[["paved", "Paved only"], ["mixed", "Mostly paved"], ["any", "Any"]].map(([v, l]) =>
-        `<label><input type="radio" name="terrain" value="${v}" ${p.terrain === v ? "checked" : ""}><span>${l}</span></label>`).join("")}</div></div>` +
-      rideFormHTML();
-  }
-  function rideFormHTML() {
-    const rs = rideSettings();
-    const opt = (name, list, cur) => `<div class="segmented" role="radiogroup">${list.map(([v, l]) =>
-      `<label><input type="radio" name="${name}" value="${v}" ${String(cur) === String(v) ? "checked" : ""}><span>${l}</span></label>`).join("")}</div>`;
-    return `<div style="padding:18px 0 4px"><p class="row-title">Suggest a ride</p><p class="row-sub">Shows Uber and Bolt under your routes.</p>` +
-      opt("ride-mode", [["long", "Long walks"], ["long_or_risky", "Long or risky"], ["risky", "Risky only"], ["off", "Never"]], rs.mode) +
-      `<p class="row-sub" style="margin-top:12px">A long walk is over</p>` +
-      opt("ride-min", [[15, "15 min"], [20, "20 min"], [30, "30 min"], [45, "45 min"]], rs.minutes) + `</div>`;
-  }
-  function saveRide(root) {
-    const m = root.querySelector("input[name=ride-mode]:checked"), n = root.querySelector("input[name=ride-min]:checked");
-    store.set("odyssey_ride", { mode: m ? m.value : RIDE_DEFAULT.mode, minutes: n ? +n.value : RIDE_DEFAULT.minutes });
+        `<label><input type="radio" name="terrain" value="${v}" ${p.terrain === v ? "checked" : ""}><span>${l}</span></label>`).join("")}</div></div>`;
   }
   function readPrefs(root) {
     return {
@@ -1323,7 +1296,6 @@
       `<button class="btn primary block" id="prefs-save" style="margin-top:16px">Save preferences</button>`,
       (body) => body.querySelector("#prefs-save").addEventListener("click", () => {
         store.set("odyssey_prefs", readPrefs(body));
-        saveRide(body);
         closeModal();
         toast("Preferences saved.");
         if (lastResults) plan();
@@ -1363,7 +1335,7 @@
       `<h3 class="section">Settings</h3>` +
       groupHTML([
         { id: "a-theme", icon: "i-palette", title: "Colour theme", sub: `${currentTheme().name} selected` },
-        { id: "a-prefs", icon: "i-sliders", title: "Preferences", sub: "Lighting, stairs, slopes, ride suggestions" },
+        { id: "a-prefs", icon: "i-sliders", title: "Preferences", sub: "Lighting, stairs, slopes" },
         { id: "a-welcome", icon: "i-replay", title: "Show the introduction", sub: "How to read the map" },
       ]) +
       `<h3 class="section">How it works</h3>` +
@@ -1405,7 +1377,7 @@
       `<div class="w-point"><i class="sw low"></i><div><b>Lower risk</b><span>Fewer recorded problems nearby</span></div></div>` +
       `<div class="w-point"><i class="sw medium"></i><div><b>Medium risk</b></div></div>` +
       `<div class="w-point"><i class="sw high"></i><div><b>Higher risk</b><span>The top 10% of paths for predicted reported crime</span></div></div>` +
-      `<div class="w-point"><i class="sw unknown"></i><div><b>Unknown</b><span>No lighting record, or outside the area police crime data covers. We show it rather than guess: that’s ${unknownPct}% of paths.</span></div></div></div>`,
+      `<div class="w-point"><i class="sw unknown"></i><div><b>Unknown</b><span>No lighting record, or outside the area police crime data covers. We show it rather than guess.</span></div></div></div>`,
     () => `<h2 id="welcome-title">What it can and can’t do</h2>` +
       `<p class="w-body">It compares routes using public data. It can’t promise any route is safe, it doesn’t track you, and it can’t call for help. In an emergency, call 999.</p>`,
     () => `<h2 id="welcome-title">Your route preferences</h2><p class="w-body" style="margin-bottom:6px">You can change these any time.</p>` + prefsFormHTML(loadPrefs()),
@@ -1423,7 +1395,6 @@
   $("welcome-next").addEventListener("click", () => {
     if (wStep === WELCOME.length - 1) {
       store.set("odyssey_prefs", readPrefs($("welcome-step")));
-      saveRide($("welcome-step"));
       store.set("odyssey_welcomed", true);
       $("welcome").classList.add("hidden");
       return;
