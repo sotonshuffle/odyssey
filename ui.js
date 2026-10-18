@@ -1,13 +1,8 @@
-/* Odyssey interface. Routing and scoring come from app.js (Athena core),
- * which this file never changes: it only presents results and collects input.
- * No build step, no backend, no keys. */
 "use strict";
 
 (async function () {
   const $ = (id) => document.getElementById(id);
   const isDesktop = () => window.matchMedia("(min-width: 900px)").matches;
-  // Yield once to the browser (so a status message can show) before heavy work.
-  // A message-channel hop is never throttled, unlike timers or animation frames.
   const nextPaint = () => new Promise((resolve) => {
     const ch = new MessageChannel();
     ch.port1.onmessage = () => resolve();
@@ -32,9 +27,6 @@
     try { localStorage.setItem("odyssey_color_theme", chosen.id); } catch (e) { /* private mode */ }
   }
 
-  // Route labels shown to people. Change the right-hand side to rename a profile
-  // everywhere in the interface; the routing core keeps its own names.
-  // "Safest" stays as the internal key; users see "Lower risk" because no route is guaranteed safe
   const LABELS = { Safest: "Lower risk", Balanced: "Balanced", Shortest: "Shortest" };
   const BAND_TEXT = { low: "Low risk", medium: "Medium risk", high: "High risk", unknown: "Risk unknown" };
   const COLORS = { low: "#22B07D", medium: "#F2A93B", high: "#E5484D", unknown: "#8EA0B8" };
@@ -87,10 +79,6 @@
   splashBar.style.width = "94%";
   await nextPaint();
 
-  /* Police UK crime was only fetched for these 12 one-mile circles
-   * (POLICE_POINTS in build_odyssey_data.py). Outside them a path has no
-   * crime history, so its model score would look falsely "low". We mark those
-   * paths as risk unknown instead, for the map, the cards and the router. */
   const CRIME_AREAS = [
     [50.9362, -1.3957], [50.9285, -1.3995], [50.9045, -1.4025], [50.9085, -1.4115],
     [50.8998, -1.4005], [50.9040, -1.3930], [50.9215, -1.3905], [50.9245, -1.3780],
@@ -447,8 +435,7 @@
       } catch (e) {
         if (e.name === "AbortError") return;
         $("search-status").className = "status warn";
-        // say what actually went wrong: no connection is not the same as "not found"
-        $("search-status").textContent = !navigator.onLine || !e.server
+          $("search-status").textContent = !navigator.onLine || !e.server
           ? "You’re offline, so place search isn’t available. Popular places, recent places and choosing on the map still work."
           : "Place search isn’t responding right now. Try again in a moment, or choose on the map.";
       }
@@ -465,8 +452,6 @@
       e.preventDefault();
       const q = $("dest").value.trim().toLowerCase();
       if (activeIdx >= 0 && suggestions[activeIdx]) return chooseDestination(suggestions[activeIdx]);
-      // never pick silently: only go straight to a result when it's the only match,
-      // or the only one whose name matches exactly
       const exact = suggestions.filter((p) => p.name.toLowerCase() === q);
       if (suggestions.length === 1 && searchDone === q) return chooseDestination(suggestions[0]);
       if (exact.length === 1 && suggestions.filter((p) => p.name.toLowerCase() === q).length === 1 && !exact[0].remote) return chooseDestination(exact[0]);
@@ -534,8 +519,6 @@
   /* ---------------------------------------------------------------- planning */
   let routeLayers = [], lastResults = null, selected = 0, pins = [], lastWaterAvoid = false;
 
-  // throw away the previous route as soon as a new plan starts, so a failed
-  // search never leaves an old route on the map or in the sheet
   // metres actually walked on paths matching test (counts only the part of each path the route uses)
   function walkedM(r, test) {
     let m = 0;
@@ -619,13 +602,7 @@
     vibrate(12);
   }
 
-  /* Google Maps handoff with as few stops as possible.
-   * Routes that differ from the shortest get up to MAX_STOPS points spread
-   * evenly along the walk, so Google follows this route instead of its own.
-   * The shortest route needs none. Set MAX_STOPS to 0 for none. */
   const MAX_STOPS = 8;   // Google Maps allows up to 9 points in a link
-  // Google Maps links can't steer a route without stops, and it pins every stop.
-  // We keep the stops (so it follows this route) and tell people on the card.
   function gmapsLink(r, shortest) {
     const steps = r.route.steps;
     const ll = (c) => `${c[0].toFixed(5)},${c[1].toFixed(5)}`;
@@ -633,8 +610,6 @@
     const end = graph.nodes.get(steps[steps.length - 1].to).c;
     const q = new URLSearchParams({ api: 1, origin: ll(start), destination: ll(end), travelmode: "walking" });
     if (MAX_STOPS > 0 && shortest && shortest.route !== r.route) {
-      // evenly spaced points along the walk, like the earlier version: Google Maps
-      // shows them as small dots and follows this route instead of its own
       const pts = r.coords;
       const cum = [0];
       for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + distM(pts[k - 1], pts[k]));
@@ -653,9 +628,6 @@
     return "https://www.google.com/maps/dir/?" + q.toString();
   }
 
-  /* Short, scannable facts for each route card (max 4), built from the same
-   * data the core's explain() uses. The full sentence stays available to
-   * screen readers through the card's label. */
   function bulletsFor(r, uniq) {
     const out = [];
     const shortest = uniq.find((x) => x.label === "Shortest");
@@ -1064,11 +1036,11 @@
     const named = [...new Set(segs.map((s) => s.name).filter((n) => n && n !== "unnamed path"))].slice(0, 4);
     const rows = [
       ["Along this route", named.length ? `Via ${named.join(", ")}` : "Mostly unnamed paths", "OpenStreetMap"],
-      ["How routes are ranked", "Lower risk and Balanced keep off paths Athena’s crime model rates higher risk, within a 12 minute detour. Shortest ignores the model.", "Athena model"],
+      ["How routes are ranked", "Lower risk and Balanced keep off paths the crime model rates higher risk, within a 12 minute detour. Shortest ignores the model.", "Risk model"],
       ["Reported street crime nearby", (crimes ? `${crimes} in the last 3 months on the paths this route uses` : "None recorded on these paths in the last 3 months") +
         (covPct < 95 ? `. Police crime data covers only ${covPct}% of this walk, so the real number may be higher.` : ""),
         `Police UK, locations approximate${crimePeriod ? ", " + crimePeriod : ""}`],
-      ["Higher-risk stretches", highM >= 10 ? `${Math.round(highM)} m` : "None", "Athena model"],
+      ["Higher-risk stretches", highM >= 10 ? `${Math.round(highM)} m` : "None", "Risk model"],
       ["Risk unknown", unknownM >= 10 ? `${Math.round(unknownM)} m of the walk` + [noLightM >= 10 ? `${Math.round(noLightM)} m with no lighting record` : "", noCrimeM >= 10 ? `${Math.round(noCrimeM)} m outside the police data area` : ""].filter(Boolean).map((x, i) => (i ? ", " : ": ") + x).join("") : "None", "OpenStreetMap lit tags, Police UK coverage"],
       ["Staffed places passed", passed.length ? passed.map((h) => `${h.name} (${h.hours})`).join("; ") : "None within 150 m", "Hand-checked list, hours may change"],
     ];
@@ -1118,7 +1090,7 @@
       `<span class="small">${s.length_m} m ${esc(s.highway_type)}</span></div>` +
       (s.risk_band === "unknown" ? `<div class="notice">${!s.crime_covered ? "Police crime data wasn’t fetched for this area" : "No lighting record for this path"}, so Odyssey doesn’t score it. Routes prefer an alternative where one exists.</div>` : "") +
       factsHTML([
-        s.risk_score != null ? ["Model estimate", `${Math.round(s.risk_score * 100)}% chance of at least one reported street crime nearby in a month`, "Athena model trained on Police UK records"] : null,
+        s.risk_score != null ? ["Model estimate", `${Math.round(s.risk_score * 100)}% chance of at least one reported street crime nearby in a month`, "Risk model trained on Police UK records"] : null,
         ["Lighting", esc(lighting), "OpenStreetMap"],
         !s.crime_covered ? ["Reported street crime nearby", "No data. Police crime records were only fetched for central Southampton, and this path is outside that area.", "Police UK"] :
         ["Reported street crime nearby", `${s.crime_count_90d || 0} in the last 3 months, ${s.crime_count_6m || 0} in 7 months` +
@@ -1172,8 +1144,6 @@
 
   /* ---------------------------------------------------------------- tonight */
   let live = null;
-  // Near spring high water at Woolston (roughly +1.8 m above datum) waterside
-  // paths can be splashed or closed, so above this level routes avoid them.
   const TIDE_HIGH_M = 1.5;
   function waterAvoid() {
     return !!(live && live.ok && (live.warnings.length || live.level >= TIDE_HIGH_M));
@@ -1213,6 +1183,7 @@
       factsHTML(liveRows) +
       `<h3 class="section">How ratings are made</h3>` +
       factsHTML([
+        ["Why it matters", "82% of women in Britain feel very or fairly unsafe walking alone after dark in a park or open space, compared with 42% of men. About one in two women feel unsafe in a busy public place, and 37% have stopped walking in quiet places after dark.", "ONS, 2022"],
         ev ? ["Crime model", `Ranks paths by predicted reported street crime. On a month it never saw, it scored ${ev.auc_model} AUC. ` +
           (ev.auc_baseline_two_month_rule ? `A simple rule (crimes in the last two months, then path length) scores ${ev.auc_baseline_two_month_rule}, so recent crime does most of the work. ` +
           `The model matters most on the ${Math.round(ev.share_scored_with_no_recent_crime * 100)}% of paths with no crime in the last two months, where history alone can’t rank them: it scores ${ev.auc_model_no_recent_crime} there.` : ""),
@@ -1292,7 +1263,7 @@
   }
   function openPrefs() {
     openModal("Preferences",
-      `<p class="lead">These change which route Athena picks. They never change the crime risk shown.</p>` + prefsFormHTML(loadPrefs()) +
+      `<p class="lead">These change which route is picked. They never change the crime risk shown.</p>` + prefsFormHTML(loadPrefs()) +
       `<button class="btn primary block" id="prefs-save" style="margin-top:16px">Save preferences</button>`,
       (body) => body.querySelector("#prefs-save").addEventListener("click", () => {
         store.set("odyssey_prefs", readPrefs(body));
@@ -1329,8 +1300,8 @@
     const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
     const ev = model && model.evaluation;
     openModal("Odyssey",
-      `<div class="about-hero"><img class="about-logo" src="assets/athena-logo.png" alt="Athena logo"><div><p class="about-name">Odyssey</p>` +
-      `<p class="small">Southampton walking routes, guided by Athena</p></div></div>` +
+      `<div class="about-hero"><img class="about-logo" src="assets/odyssey-logo.png" alt="Odyssey logo"><div><p class="about-name">Odyssey</p>` +
+      `<p class="small">Southampton walking routes</p></div></div>` +
       (!standalone && (installEvent || ios) ? groupHTML([{ id: "a-install", icon: "i-download", title: "Add to Home Screen", sub: ios ? "In Safari: Share, then Add to Home Screen" : "Opens full-screen and works offline", tone: "accent" }]) : "") +
       `<h3 class="section">Settings</h3>` +
       groupHTML([
@@ -1372,7 +1343,7 @@
     () => `<h2 id="welcome-title">Choose your way home after dark</h2>` +
       `<p class="w-body">Odyssey compares walking routes across Southampton using real police records, street lighting data and live tide information, and shows you why each route is rated the way it is.</p>` +
       `<svg class="w-art" viewBox="0 0 360 190" role="img" aria-label="Two routes across a dark map: a shorter one through a red, higher-risk stretch and a lower-risk one in green">      <rect width="360" height="190" rx="22" fill="#DCEBF9"/>      <path d="M0 140 C60 120 90 160 160 150 S280 110 360 130" stroke="#C3DCF3" stroke-width="26" fill="none"/>      <g stroke="#B7CDE6" stroke-width="2" fill="none" opacity=".9"><path d="M30 20 L90 180M140 0 L120 190M230 10 L250 190M300 0 L330 190M0 60 H360M0 100 H360"/></g>      <path d="M48 160 C90 120 120 110 150 92 S220 60 300 36" stroke="#F87171" stroke-width="6" fill="none" stroke-dasharray="2 10" stroke-linecap="round" opacity=".9"/>      <path d="M48 160 C70 150 100 150 120 130 S170 80 210 78 S270 60 300 36" stroke="#FFFFFF" stroke-width="12" fill="none" stroke-linecap="round"/>      <path d="M48 160 C70 150 100 150 120 130" stroke="#34D399" stroke-width="7" fill="none" stroke-linecap="round"/>      <path d="M120 130 C150 100 170 80 210 78" stroke="#FBBF24" stroke-width="7" fill="none" stroke-linecap="round"/>      <path d="M210 78 C240 76 270 60 300 36" stroke="#34D399" stroke-width="7" fill="none" stroke-linecap="round"/>      <circle cx="48" cy="160" r="9" fill="#3E7BD6" stroke="#FFFFFF" stroke-width="3"/>      <circle cx="300" cy="36" r="9" fill="#13294B" stroke="#FFFFFF" stroke-width="3"/>      <circle cx="180" cy="128" r="6" fill="#7DD3FC" stroke="#FFFFFF" stroke-width="2"/>    </svg>` +
-      `<div class="w-athena-card"><img src="assets/athena-logo.png" alt=""><div><b>Meet Athena</b><span>The model behind Odyssey’s route comparisons.</span></div></div>`,
+      `<div class="w-brand-card"><img src="assets/odyssey-logo.png" alt=""><div><b>Meet Odyssey</b><span>Route comparisons for Southampton.</span></div></div>`,
     () => `<h2 id="welcome-title">How to read the map</h2><div class="w-points">` +
       `<div class="w-point"><i class="sw low"></i><div><b>Lower risk</b><span>Fewer recorded problems nearby</span></div></div>` +
       `<div class="w-point"><i class="sw medium"></i><div><b>Medium risk</b></div></div>` +
@@ -1411,9 +1382,8 @@
   renderPlanView();
   showView("plan");
   setSheet("peek", false);
-  // Let visitors see the Athena introduction after the network is ready.
   splashBar.style.width = "100%";
-  splashMsg.textContent = "Athena is ready";
+  splashMsg.textContent = "Odyssey is ready";
   await new Promise((resolve) => setTimeout(resolve, 3500));
   $("splash").classList.add("done");
   setTimeout(() => $("splash").classList.add("hidden"), 400);

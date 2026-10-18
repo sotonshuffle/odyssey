@@ -54,12 +54,12 @@ h2, h3, p { margin: 0; }
 }
 #splash.done { opacity: 0; pointer-events: none; }
 .splash-odyssey { width: clamp(110px, 34vw, 152px); height: auto; margin-bottom: 9px; }
-.splash-athena-frame {
+.splash-logo-frame {
   width: clamp(150px, 43vw, 205px); aspect-ratio: 1; display: grid; place-items: center;
   border-radius: 50%; background: radial-gradient(circle, rgba(255, 190, 63, .19), rgba(255, 111, 27, .06) 60%, transparent 72%);
   border: 1px solid rgba(255, 181, 81, .3); box-shadow: 0 0 68px rgba(255, 110, 41, .13);
 }
-.splash-athena { width: 91%; height: 91%; object-fit: contain; }
+.splash-logo { width: 91%; height: 91%; object-fit: contain; }
 .splash-kicker { margin-top: 9px; color: #FFB45C; font-size: 11px; letter-spacing: .22em; font-weight: 800; }
 .splash-name { font-size: clamp(21px, 5.8vw, 27px); font-weight: 750; letter-spacing: -0.4px; }
 .splash-msg { color: var(--muted); font-size: 14px; min-height: 20px; }
@@ -330,11 +330,11 @@ h2, h3, p { margin: 0; }
 .welcome-logo { width: 132px; height: 132px; object-fit: contain; }
 #welcome-step { flex: 1; padding-top: 28px; }
 .w-art { width: 100%; height: auto; margin-top: 28px; border-radius: var(--r-l); display: block; }
-.w-athena-card { display: flex; align-items: center; gap: 12px; margin-top: 20px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); }
-.w-athena-card img { width: 52px; height: 52px; object-fit: contain; flex: none; }
-.w-athena-card div { display: grid; gap: 2px; }
-.w-athena-card b { color: #FFF9EC; font-size: 14px; }
-.w-athena-card span { color: var(--muted); font-size: 13px; line-height: 1.35; }
+.w-brand-card { display: flex; align-items: center; gap: 12px; margin-top: 20px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); }
+.w-brand-card img { width: 52px; height: 52px; object-fit: contain; flex: none; }
+.w-brand-card div { display: grid; gap: 2px; }
+.w-brand-card b { color: #FFF9EC; font-size: 14px; }
+.w-brand-card span { color: var(--muted); font-size: 13px; line-height: 1.35; }
 #welcome-step h2 { font-size: 30px; line-height: 1.15; letter-spacing: -0.6px; font-weight: 750; }
 #welcome-step .w-body { color: var(--muted); font-size: 16.5px; line-height: 1.55; margin-top: 14px; }
 .w-points { display: grid; gap: 14px; margin-top: 26px; }
@@ -518,7 +518,7 @@ body.walking #toast { bottom: 250px; }
 
 /* ---- glass + type refresh */
 h2, h3, .splash-name { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; }
-.splash-athena-frame { display: none !important; }
+.splash-logo-frame { display: none !important; }
 .splash-kicker { color: var(--accent) !important; letter-spacing: .22em; }
 .splash-bar span { background: linear-gradient(90deg, var(--accent), #9CC9F5) !important; }
 .sheet, .panel, .card, .topbar, .search, [class*="sheet"], [class*="panel"] {
@@ -530,4 +530,4 @@ button[class*="primary"], .btn-primary, .go {
   color: var(--accent-ink) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 10px 24px -10px var(--accent) !important;
 }
-.w-athena-card b { color: var(--accent) !important; }
+.w-brand-card b { color: var(--accent) !important; }

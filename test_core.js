@@ -1,4 +1,4 @@
-/* Node test for the Odyssey routing core + real-data sanity — node test_core.js */
+/* Node test for the Odyssey routing core (node test_core.js) */
 "use strict";
 const fs = require("fs");
 const core = require("./app.js");
@@ -61,8 +61,6 @@ for (const [name, from, to, maxKm] of trips) {
   if (safeMin - shortMin > core.MAX_EXTRA_MIN + 1) { console.log(`  !! safest detour ${(safeMin-shortMin).toFixed(0)} min > ${core.MAX_EXTRA_MIN}`); fail++; }
   const exposure = (rr) => rr.route.segments.reduce((t, s) => t + (s.crime_count_90d || 0), 0);
   const hiN = (rr) => rr.route.segments.filter(s => s.risk_band === "high").length;
-  // in uniformly risky areas "safest" may only match the shortest; it must
-  // never be dramatically worse, and the UI states the similarity honestly.
   if (exposure(routes[0]) > exposure(routes[1]) * 2 || hiN(routes[0]) > hiN(routes[1]) * 2) {
     console.log("  !! safest exposure dramatically worse than shortest"); fail++;
   }
@@ -73,12 +71,12 @@ for (const [name, from, to, maxKm] of trips) {
     console.log(`  [${r.label}] "${core.explain(r.route, uniq, crimes, havens, r.label)}"`);
   const url = core.routeToGmapsUrl(graph, uniq[0].route);
   console.log(`  gmaps: hops=${uniq[0].route.steps.length} stops=0`, url.slice(0, 90) + "…");
-  if (url.includes("waypoints=")) { console.log("  !! waypoints present — Google would show stops"); fail++; }
+  if (url.includes("waypoints=")) { console.log("  !! waypoints present, Google would show stops"); fail++; }
   if (!url.includes("travelmode=walking")) { console.log("  !! missing travelmode=walking"); fail++; }
   const stops = (url.match(/%7C/g) || []).length;
   if (stops) { console.log(`  !! ${stops} pipe-separated stops in URL`); fail++; }
 }
-// ---- preferences: parity with preferences.py fixtures + route flip ----
+// preferences: parity with preferences.py fixtures + route flip
 console.log("\n== preferences ==");
 const FIX = [
   [{lighting:"no", highway_type:"path", steep:null, covered:null, surface:null}, {well_lit:true}, 3.0],

@@ -25,9 +25,9 @@ try {
 <link rel="icon" href="assets/odyssey-logo.png?v=2" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="vendor/leaflet.css">
-<link rel="preload" as="image" href="assets/athena-logo.png">
+<link rel="preload" as="image" href="assets/odyssey-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=17">
+<link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -65,7 +65,7 @@ try {
 
 <div id="splash" role="status" aria-live="polite">
   <img class="splash-odyssey" src="assets/odyssey-logo.png" alt="Odyssey">
-  <div class="splash-athena-frame"><img class="splash-athena" src="assets/athena-logo.png" alt="Athena, Odyssey’s route model"></div>
+  <div class="splash-logo-frame"><img class="splash-logo" src="assets/odyssey-logo.png" alt="Odyssey logo"></div>
   <p class="splash-kicker">ODYSSEY</p>
   <p class="splash-name">Get home, your way.</p>
   <p class="splash-msg" id="splash-msg">Loading Southampton’s walking paths</p>
@@ -103,7 +103,6 @@ try {
   <button id="pick-cancel">Cancel</button>
 </div>
 
-<!-- main sheet: plan, search, results -->
 <section id="sheet" aria-label="Plan a route">
   <div class="grabber" id="grabber" aria-hidden="true"><span></span></div>
 
@@ -163,7 +162,6 @@ try {
   </div>
 </section>
 
-<!-- modal sheets -->
 <div class="scrim hidden" id="scrim"></div>
 <section class="modal hidden" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
   <div class="modal-head">
@@ -173,7 +171,6 @@ try {
   <div class="modal-body" id="modal-body"></div>
 </section>
 
-<!-- first-run welcome -->
 <section id="welcome" class="hidden" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
   <div class="welcome-inner">
     <button class="welcome-skip" id="welcome-skip">Skip</button>
@@ -187,7 +184,6 @@ try {
   </div>
 </section>
 
-<!-- Walk with Odyssey: live guidance on our own map -->
 <section id="walkbar" class="hidden" aria-label="Walking with Odyssey">
   <div class="wb-top">
     <div class="wb-main">
@@ -207,7 +203,7 @@ try {
 <div id="toast" role="status" aria-live="polite" class="hidden"><span id="toast-text"></span><button id="toast-action" class="hidden"></button></div>
 
 <script src="vendor/leaflet.js"></script>
-<script src="app.js?v=12"></script>
-<script src="ui.js?v=16"></script>
+<script src="app.js?v=13"></script>
+<script src="ui.js?v=17"></script>
 </body>
 </html>

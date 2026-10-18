@@ -1,22 +1,14 @@
-/* Odyssey — standalone app logic. Navigation engine: Athena.
- * All scoring is done by the trained Athena model (entities/model.json).
- * Live Environment Agency data is fetched in the browser (CORS-enabled API).
- * No build step, no backend, no keys. Core is exported for Node testing.
- */
 "use strict";
 
-/* ----------------------------- constants ------------------------------ */
 const BAND_RANK = { low: 0, medium: 1, high: 2 };
 const WALK_M_PER_MIN = 80;
 
-// Athena risk-penalty profiles: metres cost more on risky segments
+// risk-penalty profiles: risky segments cost more metres
 const PROFILES = {
   shortest: { low: 0, medium: 0, high: 0, unknown: 0 },
   safest:   { low: 0, medium: 6, high: 60, unknown: 5 },
   balanced: { low: 0, medium: 3, high: 30, unknown: 3 },
 };
-// docks/parking access ways: allowed in the graph (they close gated-area
-// gaps) but every profile discourages them.
 const SERVICE_MULT = 3.0;
 // how strongly the continuous model probability adds to segment cost
 const RISK_W = { safest: 30, balanced: 15, shortest: 0 };
@@ -35,9 +27,8 @@ const PRESETS = [
 ];
 
 const EA_BASE = "https://environment.data.gov.uk/flood-monitoring";
-const EA_TIDE_GAUGE = "E12660";   // Woolston tide gauge (live, OGL v3)
+const EA_TIDE_GAUGE = "E12660";   // Woolston tide gauge
 
-/* ------------------------------ utils --------------------------------- */
 function distM(a, b) {
   const r = Math.PI / 180;
   const dLat = (b[0] - a[0]) * r, dLng = (b[1] - a[1]) * r;
@@ -49,20 +40,13 @@ const key = (c) => c[0].toFixed(5) + "," + c[1].toFixed(5);
 const esc = (s) => String(s).replace(/[&<>"]/g,
   (m) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]));
 
-/* ------------------------- graph + routing ---------------------------- */
-/* ------------------------- user preferences ----------------------------
- * Separated from the crime model on purpose (see model.json design_choice):
- * the model predicts reported street crime; these multipliers let the user
- * weigh comfort attributes (lighting, stairs, terrain, shelter) when
- * choosing between routes. Mirrored 1:1 in odyssey-city-data/preferences.py
- * ---------------------------------------------------------------------- */
 const DEFAULT_PREFS = {
   well_lit: true,          // penalise segments known to be unlit
   avoid_stairs: false,     // penalise mapped steps
   avoid_steep: false,      // penalise mapped steep inclines
   sheltered: false,        // prefer covered/sheltered segments
   terrain: "mixed",        // "paved" | "mixed" | "any"
-  avoid_waterside: false,  // set live by the app near high tide or during a local flood warning
+  avoid_waterside: false,  // set live near high tide or flood warnings
 };
 function loadPrefs() {
   try {
@@ -141,11 +125,7 @@ class MinHeap {
   get size() { return this.a.length; }
 }
 
-/* Dijkstra over a per-segment penalty profile. Returns:
- * { segments: unique segs in order, chainLen: metres actually walked,
- *   steps: [{from,to,seg,len}] node hops } or null. */
-const MAX_EXTRA_MIN = 12;   // a safer route is only offered if the detour
-                            // stays within this many extra walking minutes
+const MAX_EXTRA_MIN = 12;
 
 function findRoute(graph, startKey, destKey, profile, prefs) {
   const isNamed = typeof profile === "string";
@@ -204,8 +184,6 @@ function routeStats(route) {
   return { len, minutes: len / WALK_M_PER_MIN, band: worst, unknownCount };
 }
 
-/* Full route triad with the detour bound applied. Returns
- * { shortest, safest, safestNote, balanced } (any may be null). */
 function planTriad(graph, startKey, destKey, prefs) {
   const P = prefs || DEFAULT_PREFS;
   const shortest = findRoute(graph, startKey, destKey, "shortest", P);
@@ -220,7 +198,7 @@ function planTriad(graph, startKey, destKey, prefs) {
     if (routeStats(r).minutes - shortMin <= MAX_EXTRA_MIN) {
       safest = r;
       if (f < 1) safestNote =
-        `Best risk reduction Athena can offer within a ${MAX_EXTRA_MIN}-minute detour.`;
+        `Best risk reduction available within a ${MAX_EXTRA_MIN}-minute detour.`;
       break;
     }
   }
@@ -233,10 +211,6 @@ function etaTime(minutes) {
     .toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
-/* ----------------------- plain-English explanation ---------------------
- * Template-based, deterministic: the same route always reads the same.
- * All crime numbers are real Police UK data (see entities/incidents.json).
- * --------------------------------------------------------------------- */
 function explain(route, altRoutes, crimes, havens, label) {
   const st = routeStats(route);
   const segIds = new Set(route.segments.map(s => s.id));
@@ -250,7 +224,7 @@ function explain(route, altRoutes, crimes, havens, label) {
       ? `${lead}, for much the same walking time as the shortest option.`
       : `${lead}; about ${dMin} min longer than the shortest option.`);
   } else {
-    parts.push("The most direct route Athena found.");
+    parts.push("The most direct route found.");
   }
 
   // what this route avoids vs the shortest route
@@ -278,7 +252,7 @@ function explain(route, altRoutes, crimes, havens, label) {
       `${nm} in the last 3 months (Police UK, to ${s.last_crime_month}).`);
   }
 
-  // unknowns — the honesty case
+  // unknown segments
   if (st.unknownCount > 0) {
     parts.push(`${st.unknownCount} segment${st.unknownCount > 1 ? "s" : ""} on this ` +
       `route have no lighting or crime data, so risk is unknown there.`);
@@ -298,15 +272,12 @@ function explain(route, altRoutes, crimes, havens, label) {
   if (label === "Safest" && shortest) {
     const exposure = (rr) => rr.segments.reduce((t, s) => t + (s.crime_count_90d || 0), 0);
     if (exposure(route) >= exposure(shortest.route))
-      parts.push("In this area reported crime is similar on all reasonable options — Athena cannot reduce it further here.");
+      parts.push("In this area reported crime is similar on all reasonable options, so the model cannot reduce it further here.");
   }
 
   return parts.slice(0, 3).join(" ");
 }
 
-/* Google Maps handoff: origin and destination only, travelmode=walking.
-   Google draws one continuous route with no intermediate stops; Athena's
-   chosen path stays visible in-app. */
 function routeToGmapsUrl(graph, route) {
   const first = graph.nodes.get(route.steps[0].from).c;
   const last = graph.nodes.get(route.steps[route.steps.length - 1].to).c;
@@ -315,7 +286,7 @@ function routeToGmapsUrl(graph, route) {
     api: 1, origin: ll(first), destination: ll(last),
     travelmode: "walking",
   });
-  console.debug(`[athena] gmaps: single continuous route, ` +
+  console.debug(`[route] gmaps: single continuous route, ` +
     `${route.steps.length} hops kept in-app, no intermediate stops`);
   return "https://www.google.com/maps/dir/?" + q.toString();
 }
@@ -327,5 +298,3 @@ if (typeof module !== "undefined")
     edgeMultiplier, explanationFactors, DEFAULT_PREFS, loadPrefs, etaTime,
   };
 
-/* The browser interface lives in ui.js (loaded after this file by index.html).
-   This file stays a pure routing/scoring core so test_core.js can require it. */
