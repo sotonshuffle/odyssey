@@ -1,57 +1,38 @@
-/* Odyssey: harbour-night design system.
-   One accent (periwinkle) for actions and the chosen route, so it never
-   competes with the risk colours, which carry meaning. */
+/* Odyssey: baby-blue glass design system. */
 :root {
-  --night: #0E1726;
-  --night-2: #0B1220;
-  --surface: #17233A;
-  --surface-rgb: 23, 35, 58;
-  --raised: #1F2E4A;
-  --raised-2: #263759;
-  --line: #2C3D5E;
-  --text: #EEF2F8;
-  --muted: #9AA8BF;
-  --faint: #6F7E98;
-  --accent: #A5B4FC;
-  --accent-ink: #141B33;
-  --accent-soft: rgba(165,180,252,.16);
-  --splash-inner: #143A57;
-  --splash-mid: #102B41;
-  --icon-bg: #33466D;
-  --warn-bg: #3A2E14;
-  --warn-text: #FDE7B0;
-  --danger: #EF4444;
-  --low: #34D399;
-  --medium: #FBBF24;
-  --high: #F87171;
-  --unknown: #8592A6;
-  --haven: #7DD3FC;
-  --r-s: 10px;
-  --r-m: 14px;
-  --r-l: 22px;
-  --tap: 48px;
-  --safe-t: env(safe-area-inset-top, 0px);
-  --safe-b: env(safe-area-inset-bottom, 0px);
-  --shadow: 0 10px 30px rgba(3, 8, 18, 0.45);
+  --night: #EAF3FC; --night-2: #DCEBF9;
+  --surface: #F7FBFF; --surface-rgb: 247, 251, 255;
+  --raised: #FFFFFF; --raised-2: #EEF5FC; --line: #CFE0F1;
+  --text: #13294B; --muted: #4F6788; --faint: #7D92AE;
+  --accent: #3E7BD6; --accent-ink: #FFFFFF; --accent-soft: rgba(62,123,214,.12);
+  --splash-inner: #FFFFFF; --splash-mid: #E3F0FC; --icon-bg: #DCEBF9;
+  --warn-bg: #FFF4DA; --warn-text: #6B4A0B;
+  --danger: #E5484D; --low: #22B07D; --medium: #F2A93B; --high: #E5484D;
+  --unknown: #8EA0B8; --haven: #3E7BD6;
+  --r-s: 14px; --r-m: 20px; --r-l: 28px; --tap: 48px;
+  --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+  --shadow: 0 18px 40px -12px rgba(30, 70, 130, 0.22);
   --ease: cubic-bezier(.2, .8, .2, 1);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --serif: "Fraunces", Georgia, serif;
+  font-family: "Plus Jakarta Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-text-size-adjust: 100%;
 }
 html[data-theme="lagoon"] {
-  --night: #091E24; --night-2: #07171D;
-  --surface: #11323B; --surface-rgb: 17, 50, 59;
-  --raised: #1A434A; --raised-2: #23555B; --line: #326268;
-  --text: #F0FBF9; --muted: #ADCDC8; --faint: #86A8A7;
-  --accent: #60DDD0; --accent-ink: #062A2D; --accent-soft: rgba(96,221,208,.16);
-  --splash-inner: #155660; --splash-mid: #103940; --icon-bg: #2B676B;
+  --night: #EEF5EE; --night-2: #E0EDE1;
+  --surface: #F8FCF8; --surface-rgb: 248, 252, 248;
+  --raised: #FFFFFF; --raised-2: #EEF6EF; --line: #CFE3D2;
+  --text: #17352A; --muted: #4E6B5C; --faint: #7F9A8B;
+  --accent: #3F8F6B; --accent-ink: #FFFFFF; --accent-soft: rgba(63,143,107,.12);
+  --splash-inner: #FFFFFF; --splash-mid: #E3F0E5; --icon-bg: #DDEDE0;
 }
 html[data-theme="orchid"] {
-  --night: #1B1425; --night-2: #120D1A;
-  --surface: #2B2038; --surface-rgb: 43, 32, 56;
-  --raised: #3A2A49; --raised-2: #493456; --line: #584364;
-  --text: #FFF5FB; --muted: #D2B9CF; --faint: #AE91A5;
-  --accent: #E2B7FF; --accent-ink: #281631; --accent-soft: rgba(226,183,255,.16);
-  --splash-inner: #57366C; --splash-mid: #372449; --icon-bg: #654476;
+  --night: #0B1630; --night-2: #071025;
+  --surface: #13224A; --surface-rgb: 19, 34, 74;
+  --raised: #1B2D5C; --raised-2: #24386C; --line: #2E4579;
+  --text: #EEF4FF; --muted: #A9BCE0; --faint: #7D92BC;
+  --accent: #8EC5FF; --accent-ink: #0B1630; --accent-soft: rgba(142,197,255,.16);
+  --splash-inner: #1B3366; --splash-mid: #12244B; --icon-bg: #26407A;
+  --shadow: 0 18px 40px -12px rgba(0,0,0,.5);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--night); color: var(--text); overflow: hidden; }
@@ -534,3 +515,19 @@ body.walking #toast { bottom: 250px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---- glass + type refresh */
+h2, h3, .splash-name { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; }
+.splash-athena-frame { display: none !important; }
+.splash-kicker { color: var(--accent) !important; letter-spacing: .22em; }
+.splash-bar span { background: linear-gradient(90deg, var(--accent), #9CC9F5) !important; }
+.sheet, .panel, .card, .topbar, .search, [class*="sheet"], [class*="panel"] {
+  backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4);
+}
+button[class*="primary"], .btn-primary, .go {
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, rgba(255,255,255,.35), rgba(255,255,255,0)) , var(--accent) !important;
+  color: var(--accent-ink) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 10px 24px -10px var(--accent) !important;
+}
+.w-athena-card b { color: var(--accent) !important; }

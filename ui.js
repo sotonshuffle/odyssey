@@ -19,9 +19,9 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode */ } },
   };
   const COLOR_THEMES = [
-    { id: "harbour", name: "Harbour Night", detail: "Navy and periwinkle", colors: ["#0E1726", "#17233A", "#A5B4FC"] },
-    { id: "lagoon", name: "Lagoon", detail: "Deep teal and aqua", colors: ["#091E24", "#11323B", "#60DDD0"] },
-    { id: "orchid", name: "Orchid", detail: "Plum and lilac", colors: ["#1B1425", "#2B2038", "#E2B7FF"] },
+    { id: "harbour", name: "Blue", detail: "Baby blue and glass", colors: ["#EAF3FC", "#FFFFFF", "#3E7BD6"] },
+    { id: "lagoon", name: "Sage", detail: "Soft sage and green", colors: ["#EEF5EE", "#FFFFFF", "#3F8F6B"] },
+    { id: "orchid", name: "Midnight", detail: "Sapphire night", colors: ["#0B1630", "#13224A", "#8EC5FF"] },
   ];
   const currentTheme = () => COLOR_THEMES.find((t) => t.id === document.documentElement.dataset.theme) || COLOR_THEMES[0];
   function applyTheme(theme) {
@@ -37,7 +37,7 @@
   // "Safest" stays as the internal key; users see "Lower risk" because no route is guaranteed safe
   const LABELS = { Safest: "Lower risk", Balanced: "Balanced", Shortest: "Shortest" };
   const BAND_TEXT = { low: "Low risk", medium: "Medium risk", high: "High risk", unknown: "Risk unknown" };
-  const COLORS = { low: "#34D399", medium: "#FBBF24", high: "#F87171", unknown: "#8592A6" };
+  const COLORS = { low: "#22B07D", medium: "#F2A93B", high: "#E5484D", unknown: "#8EA0B8" };
   const CRIME_NAMES = {
     "anti-social-behaviour": "Anti-social behaviour", "violent-crime": "Violence and sexual offences",
     "public-order": "Public order", "criminal-damage-arson": "Criminal damage", "shoplifting": "Shoplifting",
@@ -130,9 +130,9 @@
   const baseRenderer = L.canvas({ pane: "base" });
 
   const BASE_STYLE = {
-    water: { color: "#18355a", weight: 1, fill: true, fillColor: "#0d1d33", fillOpacity: 1 },
-    green: { color: "#14261c", weight: 0, fill: true, fillColor: "#112018", fillOpacity: 1 },
-    rail: { color: "#2a3445", weight: 1.6, dashArray: "8 6", fill: false },
+    water: { color: "#BBD6F0", weight: 1, fill: true, fillColor: "#CFE4F7", fillOpacity: 1 },
+    green: { color: "#D6EBD9", weight: 0, fill: true, fillColor: "#DDEFDF", fillOpacity: 1 },
+    rail: { color: "#B5C3D6", weight: 1.6, dashArray: "8 6", fill: false },
   };
   if (basemap && basemap.features) {
     for (const f of basemap.features) {
@@ -1033,7 +1033,7 @@
       routeLayers.push(alt.addTo(map));
     });
     const r = uniq[selected];
-    routeLayers.push(L.polyline(r.coords, { renderer: routeRenderer, color: "#06101F", weight: 11, opacity: 0.85, interactive: false }).addTo(map));
+    routeLayers.push(L.polyline(r.coords, { renderer: routeRenderer, color: "#FFFFFF", weight: 11, opacity: 0.9, interactive: false }).addTo(map));
     for (const l of r.legs) {
       routeLayers.push(L.polyline(l.coords, {
         renderer: routeRenderer, color: COLORS[l.band], weight: 6.5, opacity: 1, interactive: false,
@@ -1399,7 +1399,7 @@
   const WELCOME = [
     () => `<h2 id="welcome-title">Choose your way home after dark</h2>` +
       `<p class="w-body">Odyssey compares walking routes across Southampton using real police records, street lighting data and live tide information, and shows you why each route is rated the way it is.</p>` +
-      `<svg class="w-art" viewBox="0 0 360 190" role="img" aria-label="Two routes across a dark map: a shorter one through a red, higher-risk stretch and a lower-risk one in green">      <rect width="360" height="190" rx="22" fill="#17233A"/>      <path d="M0 140 C60 120 90 160 160 150 S280 110 360 130" stroke="#0d1d33" stroke-width="26" fill="none"/>      <g stroke="#2C3D5E" stroke-width="2" fill="none" opacity=".9"><path d="M30 20 L90 180M140 0 L120 190M230 10 L250 190M300 0 L330 190M0 60 H360M0 100 H360"/></g>      <path d="M48 160 C90 120 120 110 150 92 S220 60 300 36" stroke="#F87171" stroke-width="6" fill="none" stroke-dasharray="2 10" stroke-linecap="round" opacity=".9"/>      <path d="M48 160 C70 150 100 150 120 130 S170 80 210 78 S270 60 300 36" stroke="#06101F" stroke-width="12" fill="none" stroke-linecap="round"/>      <path d="M48 160 C70 150 100 150 120 130" stroke="#34D399" stroke-width="7" fill="none" stroke-linecap="round"/>      <path d="M120 130 C150 100 170 80 210 78" stroke="#FBBF24" stroke-width="7" fill="none" stroke-linecap="round"/>      <path d="M210 78 C240 76 270 60 300 36" stroke="#34D399" stroke-width="7" fill="none" stroke-linecap="round"/>      <circle cx="48" cy="160" r="9" fill="#A5B4FC" stroke="#0E1726" stroke-width="3"/>      <circle cx="300" cy="36" r="9" fill="#EEF2F8" stroke="#0E1726" stroke-width="3"/>      <circle cx="180" cy="128" r="6" fill="#7DD3FC" stroke="#0E1726" stroke-width="2"/>    </svg>` +
+      `<svg class="w-art" viewBox="0 0 360 190" role="img" aria-label="Two routes across a dark map: a shorter one through a red, higher-risk stretch and a lower-risk one in green">      <rect width="360" height="190" rx="22" fill="#DCEBF9"/>      <path d="M0 140 C60 120 90 160 160 150 S280 110 360 130" stroke="#C3DCF3" stroke-width="26" fill="none"/>      <g stroke="#B7CDE6" stroke-width="2" fill="none" opacity=".9"><path d="M30 20 L90 180M140 0 L120 190M230 10 L250 190M300 0 L330 190M0 60 H360M0 100 H360"/></g>      <path d="M48 160 C90 120 120 110 150 92 S220 60 300 36" stroke="#F87171" stroke-width="6" fill="none" stroke-dasharray="2 10" stroke-linecap="round" opacity=".9"/>      <path d="M48 160 C70 150 100 150 120 130 S170 80 210 78 S270 60 300 36" stroke="#FFFFFF" stroke-width="12" fill="none" stroke-linecap="round"/>      <path d="M48 160 C70 150 100 150 120 130" stroke="#34D399" stroke-width="7" fill="none" stroke-linecap="round"/>      <path d="M120 130 C150 100 170 80 210 78" stroke="#FBBF24" stroke-width="7" fill="none" stroke-linecap="round"/>      <path d="M210 78 C240 76 270 60 300 36" stroke="#34D399" stroke-width="7" fill="none" stroke-linecap="round"/>      <circle cx="48" cy="160" r="9" fill="#3E7BD6" stroke="#FFFFFF" stroke-width="3"/>      <circle cx="300" cy="36" r="9" fill="#13294B" stroke="#FFFFFF" stroke-width="3"/>      <circle cx="180" cy="128" r="6" fill="#7DD3FC" stroke="#FFFFFF" stroke-width="2"/>    </svg>` +
       `<div class="w-athena-card"><img src="assets/athena-logo.png" alt=""><div><b>Meet Athena</b><span>The model behind Odyssey’s route comparisons.</span></div></div>`,
     () => `<h2 id="welcome-title">How to read the map</h2><div class="w-points">` +
       `<div class="w-point"><i class="sw low"></i><div><b>Lower risk</b><span>Fewer recorded problems nearby</span></div></div>` +
