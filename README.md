@@ -64,8 +64,8 @@ The risk model (ML) is a L2 logistic regression (13 standardised features) train
 by the pipeline on the real crime data from August 2025 to July 2026 with evaluation on August data.
 AUC 0.971 on the held-out month, against 0.866 for a one-month crime baseline and
 0.962 for a stronger two-month crime-and-length rule. The router uses the
-model score per segment with a 12-minute detour bound. This is a model
-comparison, not a validated estimate of an individual's safety. Full model
+model score per segment with a 12-minute detour bound. This is a ML AI model calculated
+comparison, not a guaranteed estimate of an individual's safety. Full model
 card, coefficients and honesty notes: `odyssey-city-data/entities/model.json`.
 
 ## Honesty by design
