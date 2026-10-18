@@ -35,6 +35,10 @@ cp entities/*.json ../odyssey-app/data/
 
 Run the routing tests on the real data: `node odyssey-app/test_core.js`.
 
+## Technical Summary
+
+Odyssey is a static, serverless web app covering Southampton’s mapped walking network. A Python pipeline builds a routable graph from OpenStreetMap walking ways, joins Police UK historical crime data and context data, and trains Athena: a 13-feature logistic-regression model, to score each street segment for modelled reported-crime risk. The scores are precomputed into JSON, so the browser loads static data and runs Dijkstra with custom edge weights. The shortest, lower-risk, and balanced profiles change how much weight the router gives to distance versus Athena’s risk score. Preferences like lighting or stairs act as filters or penalties. <45% of segments lack lighting data, so we render them as grey dashed lines and label them as a data gap instead of guessing ‘safe’.
+
 ## DATA
 
 | Source | Use | Licence |
@@ -72,5 +76,8 @@ card, coefficients and honesty notes: `odyssey-city-data/entities/model.json`.
 
 - <45% of mapped walking segments have no lighting data: rendered
   grey-dashed and labelled as a data gap, never given a reassuring band.
+
+
+OpenStreetMap © OpenStreetMap contributors, ODbL. Police UK data © Crown copyright, Open Government Licence v3.0.
 - The crime data has no time of day. Lighting and terrain preferences affect
   the route choice, but the model does not prove a route is safer at night.
